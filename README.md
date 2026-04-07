@@ -12,7 +12,7 @@ ARC3D™ is a browser-based architectural CAD application for designing building
 
 ## Live Demo
 
-**[https://alphaknight00.github.io/Arc3d.github.io/](https://alphaknight00.github.io/Arc3d.github.io/)**
+**[https://alphaknight00.github.io/Arc3d.github.io/](https://alphaknight00.github.io/Arc-3d)**
 
 > Hosted on GitHub Pages. Works in any modern WebGL-capable browser (Chrome, Edge, Firefox).
 
