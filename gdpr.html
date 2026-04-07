@@ -36,6 +36,7 @@
         header {
             position: sticky; top: 0; z-index: 100;
             background: rgba(10,10,15,0.85);
+            -webkit-backdrop-filter: blur(20px);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
             padding: 16px 0;
@@ -142,6 +143,10 @@
             font-size: 12px;
         }
 
+        .mt-sm { margin-top: 14px; }
+        .mt-md { margin-top: 16px; }
+        .mt-xs { margin-top: 4px; }
+
         @media (max-width: 600px) {
             main { padding: 32px 16px 60px; }
             h1 { font-size: 24px; }
@@ -211,7 +216,7 @@
             <p>Email: <strong>support@hsan-studios.com</strong></p>
             <p>Website: <strong>hsan-studios.com</strong></p>
         </div>
-        <p style="margin-top:14px;">If you have any questions about how your personal data is handled, please contact us at the above address.</p>
+        <p class="mt-sm">If you have any questions about how your personal data is handled, please contact us at the above address.</p>
     </div>
 
     <!-- ─── 3 ─────────────────────────────────────────────── -->
@@ -542,7 +547,7 @@
             <p>Email: <strong>support@hsan-studios.com</strong></p>
             <p>Website: <strong>hsan-studios.com</strong></p>
         </div>
-        <p style="margin-top:16px;">If you are not satisfied with our response, you have the right to lodge a complaint with the <strong>Information Commissioner's Office (ICO)</strong>:</p>
+        <p class="mt-md">If you are not satisfied with our response, you have the right to lodge a complaint with the <strong>Information Commissioner's Office (ICO)</strong>:</p>
         <div class="contact-card">
             <p><strong>Information Commissioner's Office</strong></p>
             <p>Wycliffe House, Water Lane, Wilmslow, Cheshire, SK9 5AF</p>
@@ -554,7 +559,7 @@
 
 <footer>
     <p>© 2026 HSAN Studios — a Private Limited Company. All Rights Reserved.</p>
-    <p style="margin-top:4px;">ARC3D™ is a registered trademark of HSAN Studios.</p>
+    <p class="mt-xs">ARC3D™ is a registered trademark of HSAN Studios.</p>
 </footer>
 
 </body>
