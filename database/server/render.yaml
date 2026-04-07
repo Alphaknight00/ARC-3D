@@ -1,0 +1,27 @@
+# ═══════════════════════════════════════════════════════════════
+# ARC3D™ Database Server — Render Deployment Config
+# https://render.com/docs/yaml-spec
+# ═══════════════════════════════════════════════════════════════
+services:
+  - type: web
+    name: arc3d-server
+    runtime: node
+    plan: free
+    rootDir: database/server
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false   # Set manually in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: PORT
+        value: 3000
+      - key: ALLOWED_ORIGINS
+        value: https://alphaknight00.github.io,https://alphaknight00.github.io/ARC-3D,https://hsan-studios.com
+      - key: BCRYPT_SALT_ROUNDS
+        value: 12

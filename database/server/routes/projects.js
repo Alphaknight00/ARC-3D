@@ -5,7 +5,7 @@
 
 const express = require('express');
 const router  = express.Router();
-const auth    = require('../middleware/auth');
+const { auth }    = require('../middleware/auth');
 const Project = require('../models/Project');
 
 // All routes require authentication

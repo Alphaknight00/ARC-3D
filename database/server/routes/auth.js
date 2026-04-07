@@ -40,7 +40,7 @@ router.post('/register', async (req, res) => {
             name:      name.trim(),
             email:     email.toLowerCase().trim(),
             password:  password,
-            confirmed: false
+            confirmed: true
         });
 
         const token = generateToken(user._id);
@@ -75,13 +75,6 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ success: false, message: 'Invalid email or password.' });
         }
 
-        if (!user.confirmed) {
-            return res.status(403).json({
-                success: false,
-                message: 'Please confirm your email address before logging in. Check your inbox for the confirmation email.'
-            });
-        }
-
         // Update last login
         user.lastLoginAt = new Date();
         await user.save();
@@ -96,29 +89,6 @@ router.post('/login', async (req, res) => {
     } catch (err) {
         console.error('[login]', err.message);
         res.status(500).json({ success: false, message: 'Login failed. Please try again.' });
-    }
-});
-
-/* ── Confirm email ────────────────────────────────────────────── */
-router.post('/confirm', async (req, res) => {
-    try {
-        const { email } = req.body;
-        if (!email) {
-            return res.status(400).json({ success: false, message: 'Email is required.' });
-        }
-
-        const user = await User.findOne({ email: email.toLowerCase().trim() });
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found.' });
-        }
-
-        user.confirmed = true;
-        await user.save();
-
-        res.json({ success: true, message: 'Email confirmed successfully.' });
-    } catch (err) {
-        console.error('[confirm]', err.message);
-        res.status(500).json({ success: false, message: 'Confirmation failed.' });
     }
 });
 

@@ -29,6 +29,10 @@ class ARC3DCloudAPI {
         // Check if a custom server URL is saved
         const saved = localStorage.getItem('arc3d_server_url');
         if (saved) return saved.replace(/\/+$/, '');
+        // Production: when hosted on GitHub Pages, use the deployed server
+        if (window.location.hostname === 'alphaknight00.github.io') {
+            return 'https://arc3d-server.onrender.com';
+        }
         // Default to localhost for development
         return 'http://localhost:3000';
     }
