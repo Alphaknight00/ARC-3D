@@ -272,6 +272,93 @@ class ARC3DCloudAPI {
     }
 
     /* ══════════════════════════════════════════════════════════════════
+       PROJECTS — Cloud file storage
+       ══════════════════════════════════════════════════════════════════ */
+
+    /**
+     * List all projects for the logged-in user (summaries, no heavy data).
+     * @param {Object} [filter] - { type, favorite, search }
+     */
+    async listProjects(filter = {}) {
+        if (!this.online || !this.token) return null;
+        try {
+            const params = new URLSearchParams();
+            if (filter.type)     params.set('type', filter.type);
+            if (filter.favorite) params.set('favorite', 'true');
+            if (filter.search)   params.set('search', filter.search);
+            const qs = params.toString();
+            return await this._request('GET', '/api/projects' + (qs ? '?' + qs : ''));
+        } catch (_) { return null; }
+    }
+
+    /**
+     * Load a single project with full data.
+     * @param {string} projectId
+     */
+    async loadProject(projectId) {
+        if (!this.online || !this.token) return null;
+        try {
+            return await this._request('GET', '/api/projects/' + projectId);
+        } catch (_) { return null; }
+    }
+
+    /**
+     * Save a new project to the cloud.
+     * @param {Object} project - { name, description, address, contact, type, tags, data, thumbnail, objectCount, isPublic, appVersion }
+     */
+    async createProject(project) {
+        if (!this.online || !this.token) return null;
+        try {
+            return await this._request('POST', '/api/projects', project);
+        } catch (_) { return null; }
+    }
+
+    /**
+     * Update an existing project (full or partial update).
+     * @param {string} projectId
+     * @param {Object} updates - any subset of project fields
+     */
+    async updateProject(projectId, updates) {
+        if (!this.online || !this.token) return null;
+        try {
+            return await this._request('PUT', '/api/projects/' + projectId, updates);
+        } catch (_) { return null; }
+    }
+
+    /**
+     * Delete a project.
+     * @param {string} projectId
+     */
+    async deleteProject(projectId) {
+        if (!this.online || !this.token) return null;
+        try {
+            return await this._request('DELETE', '/api/projects/' + projectId);
+        } catch (_) { return null; }
+    }
+
+    /**
+     * Toggle favorite status on a project.
+     * @param {string} projectId
+     */
+    async toggleFavorite(projectId) {
+        if (!this.online || !this.token) return null;
+        try {
+            return await this._request('PATCH', '/api/projects/' + projectId + '/favorite');
+        } catch (_) { return null; }
+    }
+
+    /**
+     * Duplicate a project on the server.
+     * @param {string} projectId
+     */
+    async duplicateProject(projectId) {
+        if (!this.online || !this.token) return null;
+        try {
+            return await this._request('POST', '/api/projects/' + projectId + '/duplicate');
+        } catch (_) { return null; }
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
        LOCAL FALLBACK — delegates to IndexedDB when server is down
        ══════════════════════════════════════════════════════════════════ */
 

@@ -21,6 +21,7 @@ const rateLimit  = require('express-rate-limit');
 
 const authRoutes    = require('./routes/auth');
 const paymentRoutes = require('./routes/payments');
+const projectRoutes = require('./routes/projects');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -47,7 +48,7 @@ app.use(cors({
 }));
 
 /* ── Body parsing ────────────────────────────────────────────── */
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '55mb' }));
 
 /* ── Rate limiting ───────────────────────────────────────────── */
 const authLimiter = rateLimit({
@@ -72,6 +73,7 @@ app.use('/api/', generalLimiter);
 /* ── Routes ──────────────────────────────────────────────────── */
 app.use('/api/auth',     authRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/projects', projectRoutes);
 
 /* ── Health check ────────────────────────────────────────────── */
 app.get('/api/health', (req, res) => {
