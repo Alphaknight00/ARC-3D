@@ -3950,6 +3950,12 @@
         </div>
     </div>
 
+    <!-- ARC3D™ Database System -->
+    <script src="database/db-manager.js"></script>
+    <script src="database/user-store.js"></script>
+    <script src="database/payment-store.js"></script>
+    <script src="database/db-init.js"></script>
+
     <script>
         // ═══════════════════════════════════════════════════════════════════
         // PAYMENT CONFIGURATION
@@ -4695,19 +4701,11 @@
         }
 
         // --- Secure User Database Helpers ---
-        function getUsersDB() {
-            return JSON.parse(localStorage.getItem('arc3d_users_db') || '[]');
-        }
-        function saveUsersDB(users) {
-            localStorage.setItem('arc3d_users_db', JSON.stringify(users));
-        }
-        async function hashPassword(password) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
+        // NOTE: getUsersDB, saveUsersDB, hashPassword, encryptCardData,
+        //       getUserPaymentData, saveUserPaymentData, getUserPurchases,
+        //       addUserPurchase, simulateLogin, simulateRegister
+        //       are now provided by database/db-init.js (IndexedDB-backed).
+
         function showAuthError(elementId, message) {
             const el = document.getElementById(elementId);
             if (el) {
@@ -4721,98 +4719,6 @@
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
             });
-        }
-
-        // --- Secure Payment Helpers ---
-        async function encryptCardData(cardName, lastFour, expiry, method) {
-            // Hash the card holder name for secure storage
-            const nameHash = await hashPassword(cardName);
-            return {
-                nameHash: nameHash,
-                nameDisplay: cardName.charAt(0).toUpperCase() + '***' + (cardName.split(' ').length > 1 ? ' ' + cardName.split(' ').pop().charAt(0).toUpperCase() + '***' : ''),
-                lastFour: lastFour,
-                expiry: expiry,
-                method: method || 'card',
-                savedAt: new Date().toISOString()
-            };
-        }
-
-        function getUserPaymentData(email) {
-            const users = getUsersDB();
-            const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-            return user ? (user.paymentData || null) : null;
-        }
-
-        function saveUserPaymentData(email, paymentData) {
-            const users = getUsersDB();
-            const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-            if (user) {
-                user.paymentData = paymentData;
-                saveUsersDB(users);
-            }
-        }
-
-        function getUserPurchases(email) {
-            const users = getUsersDB();
-            const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-            return user ? (user.purchases || []) : [];
-        }
-
-        function addUserPurchase(email, purchase) {
-            const users = getUsersDB();
-            const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-            if (user) {
-                if (!user.purchases) user.purchases = [];
-                user.purchases.push(purchase);
-                saveUsersDB(users);
-            }
-        }
-
-        // Secure login - verifies hashed password and email confirmation
-        async function simulateLogin(email, password) {
-            const users = getUsersDB();
-            const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-            if (!user) {
-                return { success: false, message: 'Invalid email or password.' };
-            }
-            // Verify password hash
-            const passwordHash = await hashPassword(password);
-            if (user.passwordHash !== passwordHash) {
-                return { success: false, message: 'Invalid email or password.' };
-            }
-            // Check email confirmation
-            if (!user.confirmed) {
-                return { success: false, message: 'Please confirm your email address before logging in. Check your inbox for the confirmation email.' };
-            }
-            return {
-                success: true,
-                user: {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    type: 'user'
-                }
-            };
-        }
-
-        // Secure register - checks duplicate emails, hashes password
-        async function simulateRegister(name, email, password) {
-            const users = getUsersDB();
-            const existing = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-            if (existing) {
-                return { success: false, message: 'An account with this email already exists. Please log in instead.' };
-            }
-            const passwordHash = await hashPassword(password);
-            users.push({
-                id: 'user_' + Date.now(),
-                name: name,
-                email: email,
-                passwordHash: passwordHash,
-                confirmed: false,
-                registeredAt: new Date().toISOString()
-            });
-            saveUsersDB(users);
-            return { success: true };
         }
 
         // --- Email Confirmation Flow ---
@@ -4840,11 +4746,9 @@
             // Mark user as email-confirmed in the database
             const pending = JSON.parse(localStorage.getItem('pendingRegistration') || 'null');
             if (pending && pending.email) {
-                const users = getUsersDB();
-                const user = users.find(u => u.email.toLowerCase() === pending.email.toLowerCase());
-                if (user) {
-                    user.confirmed = true;
-                    saveUsersDB(users);
+                // Use the new IndexedDB-backed userStore
+                if (window.userStore) {
+                    window.userStore.confirmEmail(pending.email);
                 }
                 localStorage.removeItem('pendingRegistration');
             }
@@ -4958,7 +4862,7 @@
 
         // Logout function
         // --- User Dashboard --------------------------------------------------------
-        function openDashboard() {
+        async function openDashboard() {
             const session = JSON.parse(localStorage.getItem('userSession') || 'null');
             if (!session) { showLoginModal(); return; }
             // Pre-fill personal tab
@@ -4992,7 +4896,7 @@
                 else                       { btn.textContent = 'Select';       btn.classList.remove('db-current-plan'); }
             });
             // Load saved payment info from secure user database
-            const payData = getUserPaymentData(session.email);
+            const payData = await getUserPaymentData(session.email);
             if (payData && payData.method === 'card') {
                 if (el('dbSavedCardDisplay')) el('dbSavedCardDisplay').textContent = '\u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 ' + payData.lastFour;
                 if (el('dbSavedCardName'))    el('dbSavedCardName').textContent    = payData.nameDisplay || '';
@@ -5008,7 +4912,7 @@
                 if (el('dbSavedPaypalInfo'))  el('dbSavedPaypalInfo').classList.remove('db-row-hidden');
             }
             // Load purchase history
-            const purchases = getUserPurchases(session.email);
+            const purchases = await getUserPurchases(session.email);
             const historyEl = el('dbPurchaseHistory');
             if (historyEl && purchases.length > 0) {
                 historyEl.innerHTML = purchases.map(function(p) {
@@ -5224,11 +5128,11 @@
             const session = JSON.parse(localStorage.getItem('userSession') || '{}');
             const name = session.name || 'your account';
             if (!confirm('Delete ' + name + '? This will permanently remove all your data and cannot be undone.')) return;
-            // Remove user from the users database
-            if (session.email) {
-                const users = getUsersDB();
-                const filtered = users.filter(u => u.email.toLowerCase() !== session.email.toLowerCase());
-                saveUsersDB(filtered);
+            // Remove user and all related data from IndexedDB
+            if (session.email && window.userStore) {
+                window.userStore.getByEmail(session.email).then(user => {
+                    if (user) window.userStore.deleteAccount(user.id);
+                });
             }
             localStorage.removeItem('userSession');
             localStorage.removeItem('arc3d_subscription');
