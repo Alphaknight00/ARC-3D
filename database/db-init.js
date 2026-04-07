@@ -6,15 +6,16 @@
  * – Waits for IndexedDB to open
  * – Migrates legacy localStorage data on first run
  * – Exposes convenience wrappers that the homepage JS calls
+ * – Routes through Cloud API when server is online, falls back to local DB
  *
- * Load order:  db-manager.js → user-store.js → payment-store.js → db-init.js
+ * Load order:  db-manager.js → user-store.js → payment-store.js → db-init.js → api-client.js
  */
 
 'use strict';
 
 (async function initDatabase() {
-    const db          = window.arc3dDB;
-    const userStore   = window.userStore;
+    const db           = window.arc3dDB;
+    const userStore    = window.userStore;
     const paymentStore = window.paymentStore;
 
     try {
@@ -34,78 +35,139 @@
         console.error('[db-init] Database initialisation failed:', e);
     }
 
+    /* Helper: get the cloud API if it's online */
+    function cloud() {
+        return (window.cloudAPI && window.cloudAPI.online) ? window.cloudAPI : null;
+    }
+
     /* ══════════════════════════════════════════════════════════════════
        BACKWARD-COMPATIBLE WRAPPERS
-       These replace the old localStorage-only functions that the
-       homepage JS calls, bridging them to the new IndexedDB stores.
+       Cloud API → Local IndexedDB → localStorage  (triple fallback)
        ══════════════════════════════════════════════════════════════════ */
 
-    /**
-     * getUsersDB() – returns the full users array (legacy format).
-     * Old code calls this directly; we proxy it to IndexedDB.
-     */
     window.getUsersDB = async function () {
-        try {
-            return await userStore.getAll();
-        } catch (_) {
-            return JSON.parse(localStorage.getItem('arc3d_users_db') || '[]');
-        }
+        try { return await userStore.getAll(); }
+        catch (_) { return JSON.parse(localStorage.getItem('arc3d_users_db') || '[]'); }
     };
 
-    /**
-     * saveUsersDB() – writes users array (legacy format).
-     * Kept for backward compat; prefer userStore methods directly.
-     */
     window.saveUsersDB = async function (users) {
-        try {
-            for (const u of users) {
-                await db.put('users', u);
-            }
-        } catch (_) { /* fallback handled in caller */ }
+        try { for (const u of users) await db.put('users', u); }
+        catch (_) {}
         localStorage.setItem('arc3d_users_db', JSON.stringify(users));
     };
 
-    /**
-     * hashPassword() – SHA-256 hash (already existed, now delegates to db-manager).
-     */
     window.hashPassword = function (password) {
         return db.hash(password);
     };
 
     /**
-     * getUserPaymentData() – returns the default payment method for a user.
+     * simulateLogin — Cloud → Local IndexedDB → localStorage
+     */
+    window.simulateLogin = async function (email, password) {
+        // 1) Try cloud server
+        const api = cloud();
+        if (api) {
+            const result = await api.login(email, password);
+            if (result.success) {
+                // Also cache in local IndexedDB so offline works
+                try { await userStore.migrateFromLocalStorage(); } catch (_) {}
+            }
+            return result;
+        }
+        // 2) Local IndexedDB
+        try { return await userStore.login(email, password); }
+        catch (_) {}
+        // 3) Legacy localStorage
+        const users = JSON.parse(localStorage.getItem('arc3d_users_db') || '[]');
+        const user  = users.find(u => u.email?.toLowerCase() === email?.toLowerCase());
+        if (!user) return { success: false, message: 'Invalid email or password.' };
+        const hash = await db.hash(password);
+        if (user.passwordHash !== hash) return { success: false, message: 'Invalid email or password.' };
+        if (!user.confirmed) return { success: false, message: 'Please confirm your email address.' };
+        return { success: true, user: { id: user.id, name: user.name, email: user.email, type: 'user' } };
+    };
+
+    /**
+     * simulateRegister — Cloud → Local IndexedDB → localStorage
+     */
+    window.simulateRegister = async function (name, email, password) {
+        // 1) Try cloud server
+        const api = cloud();
+        if (api) {
+            const result = await api.register(name, email, password);
+            if (result.success) {
+                // Mirror to local DB
+                try { await userStore.register(name, email, password); } catch (_) {}
+            }
+            return result;
+        }
+        // 2) Local IndexedDB
+        try { return await userStore.register(name, email, password); }
+        catch (_) {}
+        // 3) Legacy localStorage
+        const users = JSON.parse(localStorage.getItem('arc3d_users_db') || '[]');
+        if (users.find(u => u.email?.toLowerCase() === email?.toLowerCase())) {
+            return { success: false, message: 'An account with this email already exists.' };
+        }
+        const hash = await db.hash(password);
+        users.push({ id: 'user_' + Date.now(), name, email, passwordHash: hash, confirmed: false, registeredAt: new Date().toISOString() });
+        localStorage.setItem('arc3d_users_db', JSON.stringify(users));
+        return { success: true };
+    };
+
+    /**
+     * getUserPaymentData — Cloud → Local IndexedDB → localStorage
      */
     window.getUserPaymentData = async function (email) {
+        // 1) Cloud
+        const api = cloud();
+        if (api) {
+            const methods = await api.getPaymentMethods();
+            return methods.find(m => m.isDefault) || methods[0] || null;
+        }
+        // 2) Local IndexedDB
         try {
             const user = await userStore.getByEmail(email);
             if (!user) return null;
             return await paymentStore.getDefaultPayment(user.id);
-        } catch (_) {
-            // Fallback to legacy
-            const users = JSON.parse(localStorage.getItem('arc3d_users_db') || '[]');
-            const u = users.find(x => x.email?.toLowerCase() === email?.toLowerCase());
-            return u ? (u.paymentData || null) : null;
-        }
+        } catch (_) {}
+        // 3) Legacy
+        const users = JSON.parse(localStorage.getItem('arc3d_users_db') || '[]');
+        const u = users.find(x => x.email?.toLowerCase() === email?.toLowerCase());
+        return u ? (u.paymentData || null) : null;
     };
 
     /**
-     * saveUserPaymentData() – persist a payment method for a user.
+     * saveUserPaymentData — Cloud → Local IndexedDB → localStorage
      */
     window.saveUserPaymentData = async function (email, paymentData) {
+        // 1) Cloud
+        const api = cloud();
+        if (api) {
+            await api.savePaymentMethod({
+                method:      paymentData.method || 'card',
+                nameDisplay: paymentData.nameDisplay || '',
+                lastFour:    paymentData.lastFour || '',
+                expiry:      paymentData.expiry || '',
+                paypalEmail: paymentData.paypalEmail || ''
+            });
+        }
+        // 2) Local IndexedDB
         try {
             const user = await userStore.getByEmail(email);
-            if (!user) return;
-            if (paymentData.method === 'paypal') {
-                await paymentStore.savePayPal(user.id, paymentData.paypalEmail || email);
-            } else {
-                await paymentStore.saveCard(user.id, {
-                    cardName: paymentData.nameDisplay || '',
-                    lastFour: paymentData.lastFour || '',
-                    expiry:   paymentData.expiry || ''
-                });
+            if (user) {
+                if (paymentData.method === 'paypal') {
+                    await paymentStore.savePayPal(user.id, paymentData.paypalEmail || email);
+                } else {
+                    await paymentStore.saveCard(user.id, {
+                        cardName: paymentData.nameDisplay || '',
+                        lastFour: paymentData.lastFour || '',
+                        expiry:   paymentData.expiry || ''
+                    });
+                }
             }
         } catch (_) {
-            // Fallback: mirror to legacy localStorage
+            // 3) Legacy
             const users = JSON.parse(localStorage.getItem('arc3d_users_db') || '[]');
             const u = users.find(x => x.email?.toLowerCase() === email?.toLowerCase());
             if (u) { u.paymentData = paymentData; localStorage.setItem('arc3d_users_db', JSON.stringify(users)); }
@@ -113,29 +175,41 @@
     };
 
     /**
-     * getUserPurchases() – returns purchase history for a user.
+     * getUserPurchases — Cloud → Local IndexedDB → localStorage
      */
     window.getUserPurchases = async function (email) {
+        // 1) Cloud
+        const api = cloud();
+        if (api) {
+            const purchases = await api.getPurchases();
+            if (purchases.length > 0) return purchases;
+        }
+        // 2) Local IndexedDB
         try {
             const user = await userStore.getByEmail(email);
-            if (!user) return [];
-            return await paymentStore.getPurchases(user.id);
-        } catch (_) {
-            const users = JSON.parse(localStorage.getItem('arc3d_users_db') || '[]');
-            const u = users.find(x => x.email?.toLowerCase() === email?.toLowerCase());
-            return u ? (u.purchases || []) : [];
-        }
+            if (user) return await paymentStore.getPurchases(user.id);
+        } catch (_) {}
+        // 3) Legacy
+        const users = JSON.parse(localStorage.getItem('arc3d_users_db') || '[]');
+        const u = users.find(x => x.email?.toLowerCase() === email?.toLowerCase());
+        return u ? (u.purchases || []) : [];
     };
 
     /**
-     * addUserPurchase() – record a new purchase.
+     * addUserPurchase — Cloud → Local IndexedDB → localStorage
      */
     window.addUserPurchase = async function (email, purchase) {
+        // 1) Cloud
+        const api = cloud();
+        if (api) {
+            await api.addPurchase(purchase);
+        }
+        // 2) Local IndexedDB
         try {
             const user = await userStore.getByEmail(email);
-            if (!user) return;
-            await paymentStore.addPurchase(user.id, purchase);
+            if (user) await paymentStore.addPurchase(user.id, purchase);
         } catch (_) {
+            // 3) Legacy
             const users = JSON.parse(localStorage.getItem('arc3d_users_db') || '[]');
             const u = users.find(x => x.email?.toLowerCase() === email?.toLowerCase());
             if (u) {
@@ -147,45 +221,7 @@
     };
 
     /**
-     * simulateLogin() – authenticate a user.
-     */
-    window.simulateLogin = async function (email, password) {
-        try {
-            return await userStore.login(email, password);
-        } catch (_) {
-            // Fallback to inline legacy
-            const users = JSON.parse(localStorage.getItem('arc3d_users_db') || '[]');
-            const user  = users.find(u => u.email?.toLowerCase() === email?.toLowerCase());
-            if (!user) return { success: false, message: 'Invalid email or password.' };
-            const hash = await db.hash(password);
-            if (user.passwordHash !== hash) return { success: false, message: 'Invalid email or password.' };
-            if (!user.confirmed) return { success: false, message: 'Please confirm your email address.' };
-            return { success: true, user: { id: user.id, name: user.name, email: user.email, type: 'user' } };
-        }
-    };
-
-    /**
-     * simulateRegister() – register a new user.
-     */
-    window.simulateRegister = async function (name, email, password) {
-        try {
-            const result = await userStore.register(name, email, password);
-            return result;
-        } catch (_) {
-            // Fallback to inline legacy
-            const users = JSON.parse(localStorage.getItem('arc3d_users_db') || '[]');
-            if (users.find(u => u.email?.toLowerCase() === email?.toLowerCase())) {
-                return { success: false, message: 'An account with this email already exists.' };
-            }
-            const hash = await db.hash(password);
-            users.push({ id: 'user_' + Date.now(), name, email, passwordHash: hash, confirmed: false, registeredAt: new Date().toISOString() });
-            localStorage.setItem('arc3d_users_db', JSON.stringify(users));
-            return { success: true };
-        }
-    };
-
-    /**
-     * encryptCardData() – mirrors the old function signature.
+     * encryptCardData – mirrors the old function signature.
      */
     window.encryptCardData = async function (cardName, lastFour, expiry, method) {
         const nameHash = await db.hash(cardName);
