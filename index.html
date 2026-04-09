@@ -1268,13 +1268,27 @@
         }
 
         .tech-logos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 2rem;
             margin-top: 3rem;
-            max-width: 960px;
-            margin-left: auto;
-            margin-right: auto;
+            overflow: hidden;
+            position: relative;
+            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+        }
+
+        .tech-logos-track {
+            display: flex;
+            gap: 2rem;
+            width: max-content;
+            animation: marqueeScroll 30s linear infinite;
+        }
+
+        .tech-logos-track:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes marqueeScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
         }
 
         .tech-logo-item {
@@ -1287,6 +1301,8 @@
             border-radius: 10px;
             background: rgba(255, 255, 255, 0.02);
             transition: border-color 0.2s ease, background 0.2s ease;
+            min-width: 140px;
+            flex-shrink: 0;
         }
 
         .tech-logo-item:hover {
@@ -1312,6 +1328,7 @@
             color: var(--text-tertiary);
             font-weight: 500;
             text-align: center;
+            white-space: nowrap;
         }
 
         /* Contact Section */
@@ -3790,6 +3807,7 @@
                 </p>
             </div>
             <div class="tech-logos-grid">
+              <div class="tech-logos-track">
                 <!-- Babylon.js -->
                 <div class="tech-logo-item">
                     <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -3913,6 +3931,131 @@
                     </svg>
                     <span>Earcut</span>
                 </div>
+                <!-- Duplicate set for seamless loop -->
+                <!-- Babylon.js -->
+                <div class="tech-logo-item">
+                    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M60 10L105 35V85L60 110L15 85V35L60 10Z" fill="#BB464B" opacity="0.9"/>
+                        <path d="M60 10L105 35L60 60L15 35L60 10Z" fill="#E0684B"/>
+                        <path d="M60 60L105 35V85L60 110V60Z" fill="#BB464B"/>
+                        <path d="M60 60L15 35V85L60 110V60Z" fill="#822F34"/>
+                    </svg>
+                    <span>Babylon.js</span>
+                </div>
+                <!-- JavaScript -->
+                <div class="tech-logo-item">
+                    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="10" width="100" height="100" rx="4" fill="#F7DF1E"/>
+                        <text x="98" y="100" text-anchor="end" font-family="monospace" font-size="62" font-weight="bold" fill="#323330">JS</text>
+                    </svg>
+                    <span>JavaScript</span>
+                </div>
+                <!-- HTML5 -->
+                <div class="tech-logo-item">
+                    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 10L25 100L60 110L95 100L101 10H19Z" fill="#E44D26"/>
+                        <path d="M60 18V102L88 94L93 18H60Z" fill="#F16529"/>
+                        <path d="M43 36H77L76 48H43L44 58H75L73 82L60 86L47 82L46 72H55L56 77L60 78L64 77L65 66H44L43 36Z" fill="#fff"/>
+                    </svg>
+                    <span>HTML5</span>
+                </div>
+                <!-- CSS3 -->
+                <div class="tech-logo-item">
+                    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 10L25 100L60 110L95 100L101 10H19Z" fill="#1572B6"/>
+                        <path d="M60 18V102L88 94L93 18H60Z" fill="#33A9DC"/>
+                        <path d="M43 36H77L76 48H50L51 58H75L73 82L60 86L47 82L46 72H55L56 77L60 78L64 77L65 66H44L43 36Z" fill="#fff"/>
+                    </svg>
+                    <span>CSS3</span>
+                </div>
+                <!-- WebGL -->
+                <div class="tech-logo-item">
+                    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="10" width="100" height="100" rx="12" fill="#141414"/>
+                        <path d="M30 80L42 35H50L38 80H30ZM56 35H84C88 35 90 37 90 41V50C90 54 88 56 84 56H68V63H90V80H64C60 80 58 78 58 74V56L58 51H78V47H58L56 35Z" fill="#E42B2B"/>
+                    </svg>
+                    <span>WebGL</span>
+                </div>
+                <!-- Electron -->
+                <div class="tech-logo-item">
+                    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="60" cy="60" r="8" fill="#9FEAF9"/>
+                        <ellipse cx="60" cy="60" rx="45" ry="18" stroke="#9FEAF9" stroke-width="3" fill="none" transform="rotate(0 60 60)"/>
+                        <ellipse cx="60" cy="60" rx="45" ry="18" stroke="#9FEAF9" stroke-width="3" fill="none" transform="rotate(60 60 60)"/>
+                        <ellipse cx="60" cy="60" rx="45" ry="18" stroke="#9FEAF9" stroke-width="3" fill="none" transform="rotate(-60 60 60)"/>
+                    </svg>
+                    <span>Electron</span>
+                </div>
+                <!-- jsPDF -->
+                <div class="tech-logo-item">
+                    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="25" y="10" width="70" height="100" rx="4" fill="#D32F2F"/>
+                        <path d="M40 10V30H25L40 10Z" fill="#B71C1C"/>
+                        <rect x="35" y="50" width="50" height="4" rx="2" fill="rgba(255,255,255,0.6)"/>
+                        <rect x="35" y="60" width="40" height="4" rx="2" fill="rgba(255,255,255,0.6)"/>
+                        <rect x="35" y="70" width="45" height="4" rx="2" fill="rgba(255,255,255,0.6)"/>
+                        <text x="60" y="42" text-anchor="middle" font-family="monospace" font-size="16" font-weight="bold" fill="#fff">PDF</text>
+                    </svg>
+                    <span>jsPDF</span>
+                </div>
+                <!-- Font Awesome -->
+                <div class="tech-logo-item">
+                    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="10" width="100" height="100" rx="12" fill="#228AE6"/>
+                        <path d="M60 30C47 30 38 38 38 50V52C38 52 44 48 54 48C58 48 62 50 62 54C62 64 38 62 38 82V86H82V76H54C54 72 82 70 82 54C82 38 72 30 60 30Z" fill="#fff"/>
+                    </svg>
+                    <span>Font Awesome</span>
+                </div>
+                <!-- Google Fonts -->
+                <div class="tech-logo-item">
+                    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="10" width="100" height="100" rx="12" fill="#1a1a2e"/>
+                        <text x="60" y="56" text-anchor="middle" font-family="serif" font-size="48" font-weight="bold" fill="#EA4335">A</text>
+                        <text x="60" y="56" text-anchor="middle" font-family="sans-serif" font-size="48" font-weight="300" fill="#4285F4" opacity="0.5" transform="translate(6,12)">a</text>
+                        <rect x="30" y="88" width="15" height="6" rx="3" fill="#EA4335"/>
+                        <rect x="50" y="88" width="15" height="6" rx="3" fill="#FBBC04"/>
+                        <rect x="70" y="88" width="15" height="6" rx="3" fill="#34A853"/>
+                    </svg>
+                    <span>Google Fonts</span>
+                </div>
+                <!-- IndexedDB -->
+                <div class="tech-logo-item">
+                    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                        <ellipse cx="60" cy="36" rx="38" ry="14" fill="#4FC3F7"/>
+                        <path d="M22 36V84C22 92 39 98 60 98C81 98 98 92 98 84V36" fill="none" stroke="#4FC3F7" stroke-width="4"/>
+                        <ellipse cx="60" cy="60" rx="38" ry="14" fill="none" stroke="#4FC3F7" stroke-width="3" opacity="0.5"/>
+                        <ellipse cx="60" cy="84" rx="38" ry="14" fill="none" stroke="#4FC3F7" stroke-width="3" opacity="0.3"/>
+                    </svg>
+                    <span>IndexedDB</span>
+                </div>
+                <!-- Canvas API -->
+                <div class="tech-logo-item">
+                    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="15" y="15" width="90" height="90" rx="6" fill="none" stroke="#A5D6A7" stroke-width="4"/>
+                        <rect x="25" y="25" width="70" height="70" rx="2" fill="rgba(165, 214, 167, 0.08)"/>
+                        <line x1="35" y1="75" x2="50" y2="50" stroke="#A5D6A7" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="50" y1="50" x2="65" y2="65" stroke="#A5D6A7" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="65" y1="65" x2="85" y2="35" stroke="#A5D6A7" stroke-width="3" stroke-linecap="round"/>
+                        <circle cx="35" cy="75" r="3" fill="#A5D6A7"/>
+                        <circle cx="85" cy="35" r="3" fill="#A5D6A7"/>
+                    </svg>
+                    <span>Canvas API</span>
+                </div>
+                <!-- Earcut -->
+                <div class="tech-logo-item">
+                    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                        <polygon points="60,15 100,90 20,90" fill="none" stroke="#FF9800" stroke-width="3"/>
+                        <line x1="60" y1="15" x2="60" y2="90" stroke="#FF9800" stroke-width="2" opacity="0.5"/>
+                        <line x1="40" y1="52" x2="100" y2="90" stroke="#FF9800" stroke-width="2" opacity="0.5"/>
+                        <line x1="80" y1="52" x2="20" y2="90" stroke="#FF9800" stroke-width="2" opacity="0.5"/>
+                        <circle cx="60" cy="15" r="4" fill="#FF9800"/>
+                        <circle cx="100" cy="90" r="4" fill="#FF9800"/>
+                        <circle cx="20" cy="90" r="4" fill="#FF9800"/>
+                        <circle cx="60" cy="90" r="3" fill="#FF9800" opacity="0.6"/>
+                    </svg>
+                    <span>Earcut</span>
+                </div>
+              </div>
             </div>
         </div>
     </section>
