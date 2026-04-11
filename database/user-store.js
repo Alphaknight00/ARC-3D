@@ -40,7 +40,7 @@ class UserStore {
             name:         name,
             email:        email.toLowerCase().trim(),
             passwordHash: passwordHash,
-            confirmed:    false,
+            confirmed:    true,
             registeredAt: new Date().toISOString(),
             lastLoginAt:  null,
             phone:        '',

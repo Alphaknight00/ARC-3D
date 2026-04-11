@@ -5362,31 +5362,6 @@
                 Already have an account? 
                 <button type="button" onclick="switchToLogin()">Sign in here</button>
             </div>
-
-            <!-- Email Confirmation Screen (shown after registration) -->
-            <div class="email-confirm-screen" id="emailConfirmScreen">
-                <div class="email-confirm-icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                        <polyline points="22,6 12,13 2,6"/>
-                    </svg>
-                </div>
-                <div class="email-confirm-title">Check Your Email</div>
-                <div class="email-confirm-desc">
-                    We've sent a confirmation email to
-                </div>
-                <div class="email-confirm-address" id="confirmEmailAddress">user@example.com</div>
-                <div class="email-confirm-desc">
-                    Please click the verification link in the email to activate your account, then log in below.
-                </div>
-                <button class="email-confirm-login-btn" onclick="confirmEmailGoToLogin()">Go to Login</button>
-                <div class="email-confirm-resend">
-                    Didn't receive the email? <button onclick="resendConfirmationEmail()">Resend</button>
-                </div>
-                <div class="email-confirm-check">
-                    Check your spam/junk folder if you don't see it within a few minutes.
-                </div>
-            </div>
         </div>
     </div>
 
@@ -5645,97 +5620,10 @@
             });
         }
 
-        // --- Email Confirmation Flow ---
-        function showEmailConfirmation(email) {
-            // Hide the registration form, show the confirmation screen
-            const registerModal = document.getElementById('registerModal');
-            const form = registerModal.querySelector('.auth-form');
-            const socialLogin = registerModal.querySelector('.social-login');
-            const divider = registerModal.querySelector('.auth-divider');
-            const switchText = registerModal.querySelector('.auth-switch');
-            const header = registerModal.querySelector('.auth-modal-header');
-            const confirmScreen = document.getElementById('emailConfirmScreen');
-            const emailDisplay = document.getElementById('confirmEmailAddress');
-
-            if (form) form.style.display = 'none';
-            if (socialLogin) socialLogin.style.display = 'none';
-            if (divider) divider.style.display = 'none';
-            if (switchText) switchText.style.display = 'none';
-            if (header) header.style.display = 'none';
-            if (emailDisplay) emailDisplay.textContent = email;
-            if (confirmScreen) confirmScreen.classList.add('active');
-        }
-
-        function confirmEmailGoToLogin() {
-            // Mark user as email-confirmed in the database
-            const pending = JSON.parse(localStorage.getItem('pendingRegistration') || 'null');
-            if (pending && pending.email) {
-                // Use the new IndexedDB-backed userStore
-                if (window.userStore) {
-                    window.userStore.confirmEmail(pending.email);
-                }
-                localStorage.removeItem('pendingRegistration');
-            }
-            // Reset the register modal back to normal state
-            resetRegisterModal();
-            // Close register, open login
-            document.getElementById('registerModal').classList.remove('show');
-            document.getElementById('loginModal').classList.add('show');
-        }
-
         function resetRegisterModal() {
             const registerModal = document.getElementById('registerModal');
             const form = registerModal.querySelector('.auth-form');
-            const socialLogin = registerModal.querySelector('.social-login');
-            const divider = registerModal.querySelector('.auth-divider');
-            const switchText = registerModal.querySelector('.auth-switch');
-            const header = registerModal.querySelector('.auth-modal-header');
-            const confirmScreen = document.getElementById('emailConfirmScreen');
-
             if (form) { form.style.display = ''; form.reset(); }
-            if (socialLogin) socialLogin.style.display = '';
-            if (divider) divider.style.display = '';
-            if (switchText) switchText.style.display = '';
-            if (header) header.style.display = '';
-            if (confirmScreen) confirmScreen.classList.remove('active');
-        }
-
-        function sendConfirmationEmail(name, email) {
-            // Build the confirmation email via mailto
-            // In production, replace with a server-side email API (e.g. SendGrid, Mailgun)
-            const subject = encodeURIComponent('Welcome to ARC3D\u2122 \u2013 Please Confirm Your Email');
-            const loginUrl = window.location.origin + window.location.pathname;
-            const body = encodeURIComponent(
-                'Hi ' + name + ',\n\n' +
-                'Thank you for registering with ARC3D\u2122 by HSAN Studios.\n\n' +
-                'Please confirm your email address by clicking the link below:\n\n' +
-                loginUrl + '\n\n' +
-                'Once confirmed, you can log in and start designing.\n\n' +
-                'If you did not create this account, please ignore this email.\n\n' +
-                'Best regards,\n' +
-                'The ARC3D\u2122 Team\n' +
-                'HSAN Studios\n' +
-                'support@hsan-studios.com'
-            );
-            // Open the user's mail client with pre-filled confirmation email
-            window.open('mailto:' + encodeURIComponent(email) + '?subject=' + subject + '&body=' + body, '_blank');
-        }
-
-        function resendConfirmationEmail() {
-            const pending = JSON.parse(localStorage.getItem('pendingRegistration') || 'null');
-            if (pending) {
-                sendConfirmationEmail(pending.name, pending.email);
-                // Brief visual feedback
-                const resendBtn = document.querySelector('.email-confirm-resend button');
-                if (resendBtn) {
-                    resendBtn.textContent = 'Sent!';
-                    resendBtn.disabled = true;
-                    setTimeout(() => {
-                        resendBtn.textContent = 'Resend';
-                        resendBtn.disabled = false;
-                    }, 3000);
-                }
-            }
         }
 
         // Update UI for logged in user

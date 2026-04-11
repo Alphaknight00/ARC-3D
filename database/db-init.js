@@ -110,7 +110,7 @@
             return { success: false, message: 'An account with this email already exists.' };
         }
         const hash = await db.hash(password);
-        users.push({ id: 'user_' + Date.now(), name, email, passwordHash: hash, confirmed: false, registeredAt: new Date().toISOString() });
+        users.push({ id: 'user_' + Date.now(), name, email, passwordHash: hash, confirmed: true, registeredAt: new Date().toISOString() });
         localStorage.setItem('arc3d_users_db', JSON.stringify(users));
         return { success: true };
     };
