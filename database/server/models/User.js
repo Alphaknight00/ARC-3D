@@ -44,6 +44,16 @@ const userSchema = new mongoose.Schema({
     lastLoginAt: {
         type: Date,
         default: null
+    },
+    resetToken: {
+        type: String,
+        default: null,
+        select: false
+    },
+    resetTokenExpires: {
+        type: Date,
+        default: null,
+        select: false
     }
 }, {
     timestamps: true  // adds createdAt, updatedAt
@@ -69,6 +79,8 @@ userSchema.methods.comparePassword = async function (candidate) {
 userSchema.methods.toSafe = function () {
     const obj = this.toObject();
     delete obj.password;
+    delete obj.resetToken;
+    delete obj.resetTokenExpires;
     delete obj.__v;
     return obj;
 };

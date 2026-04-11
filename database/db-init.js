@@ -116,6 +116,28 @@
     };
 
     /**
+     * simulateForgotPassword — Cloud only (no local reset)
+     */
+    window.simulateForgotPassword = async function (email) {
+        const api = cloud();
+        if (api) {
+            return await api.forgotPassword(email);
+        }
+        return { success: false, message: 'Password reset requires a server connection. Please try again later.' };
+    };
+
+    /**
+     * simulateResetPassword — Cloud only (no local reset)
+     */
+    window.simulateResetPassword = async function (email, token, newPassword) {
+        const api = cloud();
+        if (api) {
+            return await api.resetPassword(email, token, newPassword);
+        }
+        return { success: false, message: 'Password reset requires a server connection. Please try again later.' };
+    };
+
+    /**
      * getUserPaymentData — Cloud → Local IndexedDB → localStorage
      */
     window.getUserPaymentData = async function (email) {

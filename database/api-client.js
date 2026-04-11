@@ -173,6 +173,32 @@ class ARC3DCloudAPI {
     }
 
     /**
+     * Request a password reset code.
+     */
+    async forgotPassword(email) {
+        if (!this.online) return { success: false, message: 'Server offline. Cannot reset password.' };
+        try {
+            const data = await this._request('POST', '/api/auth/forgot-password', { email });
+            return { success: true, message: data.message };
+        } catch (err) {
+            return { success: false, message: err.data?.message || err.message };
+        }
+    }
+
+    /**
+     * Reset password using the 6-digit code.
+     */
+    async resetPassword(email, token, newPassword) {
+        if (!this.online) return { success: false, message: 'Server offline. Cannot reset password.' };
+        try {
+            const data = await this._request('POST', '/api/auth/reset-password', { email, token, newPassword });
+            return { success: true, message: data.message };
+        } catch (err) {
+            return { success: false, message: err.data?.message || err.message };
+        }
+    }
+
+    /**
      * Delete account and all associated data.
      */
     async deleteAccount() {

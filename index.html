@@ -5175,6 +5175,9 @@
                 </div>
                 
                 <div id="loginError" class="auth-error"></div>
+                <div style="text-align:right;margin:-0.25rem 0 0.75rem;">
+                    <button type="button" onclick="switchToForgotPassword()" style="background:none;border:none;color:var(--accent-blue);font-size:0.78rem;cursor:pointer;padding:0;text-decoration:underline;">Forgot Password?</button>
+                </div>
                 <button type="submit" class="auth-submit-btn">Sign In</button>
             </form>
             
@@ -5196,6 +5199,63 @@
             <div class="auth-switch">
                 Don't have an account? 
                 <button type="button" onclick="switchToRegister()">Sign up here</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="auth-modal">
+        <div class="auth-modal-content">
+            <button class="auth-close" onclick="closeAuthModal()">&times;</button>
+
+            <!-- Step 1: Enter email -->
+            <div id="forgotStep1">
+                <div class="auth-modal-header">
+                    <h2>Forgot Password</h2>
+                    <p>Enter your email address and we'll send you a reset code</p>
+                </div>
+                <form class="auth-form" onsubmit="handleForgotPassword(event)">
+                    <div class="form-group">
+                        <label for="forgotEmail">Email Address <span class="required-star">*</span></label>
+                        <input type="email" id="forgotEmail" name="email" placeholder="Enter your email" required>
+                    </div>
+                    <div id="forgotError" class="auth-error"></div>
+                    <button type="submit" class="auth-submit-btn">Send Reset Code</button>
+                </form>
+                <div class="auth-switch">
+                    Remember your password?
+                    <button type="button" onclick="switchFromForgotToLogin()">Back to login</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Enter code + new password -->
+            <div id="forgotStep2" style="display:none;">
+                <div class="auth-modal-header">
+                    <h2>Reset Password</h2>
+                    <p>Enter the 6-digit code sent to your email and choose a new password</p>
+                </div>
+                <form class="auth-form" onsubmit="handleResetPassword(event)">
+                    <input type="hidden" id="resetEmail" value="">
+                    <div class="form-group">
+                        <label for="resetCode">Reset Code <span class="required-star">*</span></label>
+                        <input type="text" id="resetCode" name="code" placeholder="Enter 6-digit code" required maxlength="6" pattern="[0-9]{6}">
+                    </div>
+                    <div class="form-group">
+                        <label for="resetNewPassword">New Password <span class="required-star">*</span></label>
+                        <input type="password" id="resetNewPassword" name="newPassword" placeholder="Enter new password" required minlength="8">
+                    </div>
+                    <div class="form-group">
+                        <label for="resetConfirmPassword">Confirm Password <span class="required-star">*</span></label>
+                        <input type="password" id="resetConfirmPassword" name="confirmPassword" placeholder="Confirm new password" required>
+                    </div>
+                    <div id="resetError" class="auth-error"></div>
+                    <div id="resetSuccess" class="auth-error" style="color:#22c55e;background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.2);"></div>
+                    <button type="submit" class="auth-submit-btn">Reset Password</button>
+                </form>
+                <div class="auth-switch">
+                    Didn't receive a code?
+                    <button type="button" onclick="showForgotStep1()">Try again</button>
+                </div>
             </div>
         </div>
     </div>
@@ -5346,6 +5406,7 @@
         function closeAuthModal() {
             document.getElementById('loginModal').classList.remove('show');
             document.getElementById('registerModal').classList.remove('show');
+            document.getElementById('forgotPasswordModal').classList.remove('show');
             document.body.style.overflow = 'auto';
             resetRegisterModal();
         }
@@ -5357,15 +5418,102 @@
 
         function switchToLogin() {
             document.getElementById('registerModal').classList.remove('show');
+            document.getElementById('forgotPasswordModal').classList.remove('show');
             document.getElementById('loginModal').classList.add('show');
+        }
+
+        function switchToForgotPassword() {
+            document.getElementById('loginModal').classList.remove('show');
+            document.getElementById('forgotPasswordModal').classList.add('show');
+            showForgotStep1();
+        }
+
+        function switchFromForgotToLogin() {
+            document.getElementById('forgotPasswordModal').classList.remove('show');
+            document.getElementById('loginModal').classList.add('show');
+        }
+
+        function showForgotStep1() {
+            document.getElementById('forgotStep1').style.display = '';
+            document.getElementById('forgotStep2').style.display = 'none';
+            const errEl = document.getElementById('forgotError');
+            if (errEl) errEl.style.display = 'none';
+        }
+
+        function showForgotStep2(email) {
+            document.getElementById('forgotStep1').style.display = 'none';
+            document.getElementById('forgotStep2').style.display = '';
+            document.getElementById('resetEmail').value = email;
+            const errEl = document.getElementById('resetError');
+            const sucEl = document.getElementById('resetSuccess');
+            if (errEl) errEl.style.display = 'none';
+            if (sucEl) sucEl.style.display = 'none';
+        }
+
+        async function handleForgotPassword(event) {
+            event.preventDefault();
+            const errEl = document.getElementById('forgotError');
+            if (errEl) errEl.style.display = 'none';
+
+            const email = document.getElementById('forgotEmail').value.trim();
+            if (!email) return;
+
+            try {
+                const result = await simulateForgotPassword(email);
+                if (result.success) {
+                    showForgotStep2(email);
+                } else {
+                    showAuthError('forgotError', result.message);
+                }
+            } catch (err) {
+                console.error('Forgot password error:', err);
+                showAuthError('forgotError', 'Request failed. Please try again.');
+            }
+        }
+
+        async function handleResetPassword(event) {
+            event.preventDefault();
+            const errEl = document.getElementById('resetError');
+            const sucEl = document.getElementById('resetSuccess');
+            if (errEl) errEl.style.display = 'none';
+            if (sucEl) sucEl.style.display = 'none';
+
+            const email = document.getElementById('resetEmail').value;
+            const code = document.getElementById('resetCode').value.trim();
+            const newPassword = document.getElementById('resetNewPassword').value;
+            const confirmPassword = document.getElementById('resetConfirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                showAuthError('resetError', 'Passwords do not match.');
+                return;
+            }
+
+            try {
+                const result = await simulateResetPassword(email, code, newPassword);
+                if (result.success) {
+                    if (sucEl) {
+                        sucEl.textContent = result.message || 'Password reset successfully!';
+                        sucEl.style.display = 'block';
+                    }
+                    setTimeout(() => {
+                        switchFromForgotToLogin();
+                    }, 2000);
+                } else {
+                    showAuthError('resetError', result.message);
+                }
+            } catch (err) {
+                console.error('Reset password error:', err);
+                showAuthError('resetError', 'Password reset failed. Please try again.');
+            }
         }
 
         // Close modal when clicking outside
         document.addEventListener('click', function(event) {
             const loginModal = document.getElementById('loginModal');
             const registerModal = document.getElementById('registerModal');
+            const forgotModal = document.getElementById('forgotPasswordModal');
             
-            if (event.target === loginModal || event.target === registerModal) {
+            if (event.target === loginModal || event.target === registerModal || event.target === forgotModal) {
                 closeAuthModal();
             }
         });
@@ -5491,7 +5639,7 @@
             }
         }
         function clearAuthErrors() {
-            ['loginError', 'registerError'].forEach(id => {
+            ['loginError', 'registerError', 'forgotError', 'resetError', 'resetSuccess'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
             });

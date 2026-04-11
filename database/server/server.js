@@ -99,18 +99,20 @@ app.use((err, req, res, _next) => {
 /* ── Connect to MongoDB & start ──────────────────────────────── */
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/arc3d';
 
+// Start server first so health checks work even without DB
+app.listen(PORT, () => {
+    console.log(`\n  ╔══════════════════════════════════════════╗`);
+    console.log(`  ║  ARC3D™ Database Server                 ║`);
+    console.log(`  ║  Running on http://localhost:${PORT}       ║`);
+    console.log(`  ║  © 2026 HSAN Studios                    ║`);
+    console.log(`  ╚══════════════════════════════════════════╝\n`);
+});
+
 mongoose.connect(MONGODB_URI)
     .then(() => {
         console.log('[MongoDB] Connected to', MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@'));
-        app.listen(PORT, () => {
-            console.log(`\n  ╔══════════════════════════════════════════╗`);
-            console.log(`  ║  ARC3D™ Database Server                 ║`);
-            console.log(`  ║  Running on http://localhost:${PORT}       ║`);
-            console.log(`  ║  © 2026 HSAN Studios                    ║`);
-            console.log(`  ╚══════════════════════════════════════════╝\n`);
-        });
     })
     .catch(err => {
         console.error('[MongoDB] Connection failed:', err.message);
-        process.exit(1);
+        console.error('[MongoDB] Server running without database — auth routes will fail');
     });
