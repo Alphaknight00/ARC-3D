@@ -108,7 +108,10 @@ app.listen(PORT, () => {
     console.log(`  ╚══════════════════════════════════════════╝\n`);
 });
 
-mongoose.connect(MONGODB_URI)
+mongoose.connect(MONGODB_URI, {
+    tls: true,
+    tlsAllowInvalidCertificates: true
+})
     .then(() => {
         console.log('[MongoDB] Connected to', MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@'));
     })
