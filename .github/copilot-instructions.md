@@ -5,7 +5,7 @@
 **Product**: ARC3D™ – Professional Architectural CAD Software  
 **Company**: HSAN Studios — a Private Limited Company  
 **Domain**: HSAN-Studios.com | support@HSAN-Studios.com  
-**Architecture**: Single-file monolithic HTML (~102k lines) with CSS, HTML, and 24 vanilla JS ES6 manager classes  
+**Architecture**: Single-file monolithic HTML (~131k lines) with CSS, HTML, and 24 vanilla JS ES6 manager classes  
 **Rendering**: Babylon.js 6.0 WebGL with dual 2D orthographic / 3D perspective camera modes  
 **Storage**: Client-side localStorage + IndexedDB (no backend)  
 **Development**: No build system – open `.html` directly in browser  
@@ -14,7 +14,7 @@
 ### Files
 | File | Purpose |
 |------|---------|
-| `arc3d.html` | Main app (~102k lines) |
+| `arc3d.html` | Main app (~131k lines) |
 | `index.html` | Marketing landing page / project launcher (~3.8k lines) |
 | `arc3d-help.html` | In-app help / keyboard shortcuts reference (~1.5k lines) |
 | `ARC3D - Business Plan.html` | Business plan for £250K funding |
@@ -40,22 +40,22 @@ All 24 managers instantiated in `CADModeler.initializeManagers()` and exposed gl
 
 ### 🔥 Primary (most frequently modified)
 ```javascript
-buildingTools       // Wall/door/window/roof/floor/staircase creation (~23536)
-sceneManager        // Babylon.js scene, cameras, lights, visibility (~16576)
-uiManager           // Panels, notifications, modals, themes (~20947)
-historyManager      // Undo/redo - update when adding new element types (~73662)
-fileManager         // JSON serialization - update when adding new metadata (~77400)
-appManager          // Keyboard routing, 2D/3D switching (~89792)
+buildingTools       // Wall/door/window/roof/floor/staircase/surface creation (~37170)
+sceneManager        // Babylon.js scene, cameras, lights, visibility (~21163)
+uiManager           // Panels, notifications, modals, themes (~30256)
+historyManager      // Undo/redo - update when adding new element types (~108252)
+fileManager         // JSON serialization - update when adding new metadata (~119129)
+appManager          // Keyboard routing, 2D/3D switching (~134451)
 ```
 
 ### ⚙️ Secondary (occasional modifications)
 ```javascript
-settingsManager     // User preferences, grid settings (~22561)
-propertiesManager   // Element property panels (~61028)
+settingsManager     // User preferences, grid settings (~32654)
+propertiesManager   // Element property panels (~94677)
 selectionTools      // Multi-select, lasso selection
 measurementTools    // Distance/area measuring
 viewportControls    // Camera manipulation
-exportTools         // PDF/DXF export (~80187)
+exportTools         // PDF/DXF export (~122689)
 ```
 
 ### 📦 Utility (rarely modified)
@@ -69,8 +69,8 @@ materialTools       // Material library
 renderTools         // Rendering options
 cloudStorageManager // Cloud sync placeholder
 collaborationTools  // Multi-user placeholder
-layerManager        // Layer visibility management (~89374)
-projectDatabaseManager  // Project database operations (~74386)
+layerManager        // Layer visibility management (~134033)
+projectDatabaseManager  // Project database operations (~109659)
 ```
 
 ## Data Model: Mesh Metadata
@@ -78,12 +78,12 @@ projectDatabaseManager  // Project database operations (~74386)
 All elements are `BABYLON.Mesh` or `TransformNode` with custom metadata:
 ```javascript
 mesh.metadata = {
-  type: 'wall',              // 'wall', 'door', 'window', 'roof', 'floor', 'staircase'
+  type: 'wall',              // 'wall', 'door', 'window', 'roof', 'floor', 'staircase', 'surface'
   wallType: 'cavity',        // 'solid', 'cavity', 'stud'
   startPoint: Vector3,       // 3D coordinates
   endPoint: Vector3,
   thickness: 0.3,            // meters (internal)
-  height: 2.7,               // meters (internal)
+  height: 3.0,               // meters (internal) — default changed from 2.7 to 3.0
   baseElevation: 0,          // meters - for multi-story placement
   level: 'ground',           // 'ground', 'first', 'second', etc.
   openingInserts: {}         // Door/window IDs keyed by mesh ID
@@ -93,8 +93,9 @@ Storage: `sceneManager.objects[]` array holds all building elements.
 
 ## Multi-Story Support
 
-Both walls and stairs support level-based placement:
-- **Level presets**: Ground (0m), 1st (2.7m), 2nd (5.4m), 3rd (8.1m), 4th (10.8m), Basement (-2.7m)
+Walls, stairs, floors, ceilings, and curtain walls support level-based placement:
+- **Level presets**: Ground (0m), 1st (3.0m), 2nd (6.0m), 3rd (9.0m), 4th (12.0m), Basement (-3.0m)
+- **Default level height**: 3000mm (changed from 2700mm)
 - **Base elevation**: Custom elevation in mm for precise placement
 - **Properties**: `baseElevation` (meters), `level` (name string) stored in metadata
 - **Methods**: `setWallLevelPreset()`, `setWallBaseElevation()`, `setStairLevelPreset()`, `setStairBaseElevation()`
@@ -106,7 +107,7 @@ Both walls and stairs support level-based placement:
 | 2D | `sceneManager.camera2D` (orthographic) | `appManager.switchTo2D()` | Wall outlines, dimension labels, no skybox |
 | 3D | `sceneManager.camera` (ArcRotate) | `appManager.switchTo3D()` | Shadows, skybox, orbit controls |
 
-**Default startup**: 2D mode (set in `CADModeler.init()` around line 15822)
+**Default startup**: 2D mode (set in `CADModeler.init()`)
 
 ## Keyboard Shortcuts
 ```
@@ -122,9 +123,9 @@ Escape     Cancel current tool / close menus
 **Centerline architecture**: Walls positioned on centerline with internal/external face offsets.
 
 Key functions (search to find current lines):
-- `createWallHatching()` (~27621) – Diagonal cross-hatch visualization for 2D mode
-- `calculateBothMiterPoints()` (~23588) – Returns `{ internal, external }` Vector3 for corner joins
-- `showSnapIndicator()` (~29324) – Dark green disc for snap points
+- `createWallHatching()` – Diagonal cross-hatch visualization for 2D mode
+- `calculateBothMiterPoints()` – Returns `{ internal, external }` Vector3 for corner joins
+- `showSnapIndicator()` – Dark green disc for snap points
 
 **Miter rule**: At acute corners, extend miter points along miter direction – never revert to perpendicular offsets:
 ```javascript
@@ -227,3 +228,53 @@ handleXxxResizeDrag(point)    // Applies scaling + repositions handles
 endXxxHandleDrag()            // Saves metadata + records history
 ```
 Handle metadata: `{ isTextResizeHandle: true, cornerIndex, corner, cursor, parentText }`
+
+## Staircase System
+
+Staircases support three shapes with full 3D geometry:
+- **Straight**: Single or multi-flight with landings (double-click to finalize multi-flight)
+- **U-Shaped**: Two parallel flights with 180° landing
+- **Spiral**: Helical steps around a central pole
+
+### Staircase Metadata
+```javascript
+mesh.metadata = {
+  type: 'staircase',
+  stairType: 'straight',       // 'straight', 'u-shaped', 'spiral'
+  stepCount: 14,
+  stepHeight: 0.214,           // meters
+  stepDepth: 0.25,             // meters
+  totalHeight: 3.0,            // meters
+  width: 0.9,                  // meters
+  hasRailings: true,
+  flipped: false,
+  stairMaterial: 'concrete',   // 'wood', 'concrete', 'steel', 'stone', 'glass'
+  baseElevation: 0,            // meters
+  level: 'ground',
+  startPoint: Vector3,
+  endPoint: Vector3
+}
+```
+
+### Staircase Components
+- **Steps/treads**: Individual box meshes per step
+- **Stringers**: Custom parallelogram prism geometry with vertical-cut ends aligned to risers
+- **Railings**: Follow stringer slope, aligned with stringer outer edges
+- **Landings**: Flat slab meshes connecting flights (U-shaped and multi-flight)
+- **2D Dimensions**: Auto-generated run, width, rise, and landing depth annotations (`_createStaircaseDimensions()`)
+
+### Multi-Flight Stairs
+- `_stairFlights[]` array tracks `{start, end, direction, riserCount}` per flight
+- Click to place each flight direction, double-click to finalize
+- Variable landing depth calculated from flight geometry
+- Stringers and railings generated per-flight with landing connectors
+
+## Surface Tool
+
+Point-by-point polygon tool for pathways and uneven terrain surfaces.
+- **Activation**: Surface tool button or keyboard shortcut
+- **Creation**: Click to place boundary points, double-click to close polygon
+- **Interior points**: Optional elevation control points within the boundary
+- **Triangulation**: Delaunay triangulation for mesh generation
+- **Metadata type**: `'surface'` with `boundaryPoints`, `interiorPoints`, `elevation`, `thickness`
+- **Selection**: Custom outline rendering for boundary + vertical edges
