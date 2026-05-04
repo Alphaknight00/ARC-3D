@@ -45962,8 +45962,13 @@ class BuildingTools {
             this.hideSnapIndicator();
         }
 
-        // Before first click — just show snap indicators, no preview line
-        if (!this._cwStartPoint) return true;
+        // Before first click — single disc at centerline snap/cursor position
+        if (!this._cwStartPoint) {
+            this.showSnapIndicator(point, 'endpoint');
+            this.clearTJunctionSnapIndicator();
+            this.updateAlignmentGuides(point, point, 0.03);
+            return true;
+        }
 
         // ── Ortho snap: constrain angle when Shift held or ortho mode active ──
         // ── Wall-angle snap: snap parallel/perpendicular to existing walls ──
@@ -61351,7 +61356,28 @@ class BuildingTools {
                 // Pre-first-click: just show snap indicators (no preview line yet)
                 return;
             }
-            
+
+            // ═══════════════════════════════════════════════════════════
+            // WALL TOOL: pre-first-click — snap indicator at cursor
+            // ═══════════════════════════════════════════════════════════
+            if (this.points.length === 0 && this.activeTool === 'wall') {
+                let cursorPt = pickedPoint.clone();
+                cursorPt.y = 0;
+
+                // Snap to centerline endpoints only (clean single-point guidance)
+                const clSnap = this.findBestSnapPointForDrag(cursorPt, -1);
+                if (clSnap) {
+                    cursorPt = clSnap.clone();
+                    cursorPt.y = 0;
+                }
+
+                // Single disc at the centerline snap/cursor position
+                this.showSnapIndicator(cursorPt, 'endpoint');
+                this.clearTJunctionSnapIndicator();
+                this.updateAlignmentGuides(cursorPt, cursorPt, 0.03);
+                return;
+            }
+
             // Show preview based on active tool
             if (this.points.length === 1 && this.activeTool === 'wall') {
                 // Wall tool: show full rectangle preview with mitered corners
