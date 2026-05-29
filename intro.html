@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="copyright" content="© 2026 HSAN Studios. All Rights Reserved.">
+    <meta name="author" content="HSAN Studios">
+    <meta name="description" content="Welcome to ARC3D™ — a professional browser-based architectural CAD platform from HSAN Studios. Design walls, doors, windows, roofs, and staircases with precision in 2D and 3D.">
+
+    <title>Welcome to ARC3D™ | HSAN Studios</title>
+
+    <link rel="icon" type="image/x-icon" href="knightai(2).ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #060b18;
+            --bg-secondary: #0c1222;
+            --bg-tertiary: #141c2f;
+            --text-primary: #ffffff;
+            --text-secondary: #e0e0e0;
+            --text-tertiary: #a0a0a0;
+            --accent-blue: #3b82f6;
+            --accent-blue-hover: #2563eb;
+            --accent-blue-light: rgba(59, 130, 246, 0.12);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-medium: rgba(255, 255, 255, 0.16);
+        }
+
+        html, body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Background ambient gradients */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(800px circle at 15% 20%, rgba(59, 130, 246, 0.18), transparent 60%),
+                radial-gradient(700px circle at 85% 80%, rgba(16, 185, 129, 0.10), transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Grid overlay */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+            -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+            mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+        }
+
+        .nav {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 48px;
+            border-bottom: 1px solid var(--border-subtle);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-mark {
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, var(--accent-blue), #6366f1);
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        .brand-tm {
+            font-size: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+        }
+
+        .nav-links a {
+            color: var(--text-tertiary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--text-primary); }
+
+        /* Hero */
+        .hero {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 96px 48px 64px;
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: var(--accent-blue-light);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #93c5fd;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 28px;
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+        }
+
+        h1 {
+            font-size: clamp(40px, 6vw, 72px);
+            font-weight: 800;
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+            margin-bottom: 24px;
+        }
+
+        h1 .gradient {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #34d399 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: clamp(16px, 2vw, 20px);
+            color: var(--text-tertiary);
+            max-width: 720px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+        }
+
+        .cta-row {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-blue-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 12px 32px rgba(59, 130, 246, 0.45);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border-color: var(--border-medium);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-medium);
+        }
+
+        /* Stats strip */
+        .stats {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            gap: 64px;
+            padding: 32px 48px;
+            border-top: 1px solid var(--border-subtle);
+            border-bottom: 1px solid var(--border-subtle);
+            margin: 64px auto 0;
+            max-width: 1200px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 4px;
+        }
+
+        /* Features */
+        .features {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 96px 48px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .section-eyebrow {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: clamp(28px, 4vw, 40px);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        .section-sub {
+            color: var(--text-tertiary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 28px;
+            transition: all 0.25s;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+            transform: translateY(-3px);
+            background: var(--bg-tertiary);
+        }
+
+        .feature-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: var(--accent-blue-light);
+            display: grid;
+            place-items: center;
+            margin-bottom: 18px;
+            color: var(--accent-blue);
+        }
+
+        .feature-icon svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .feature-title {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .feature-desc {
+            font-size: 14px;
+            color: var(--text-tertiary);
+            line-height: 1.6;
+        }
+
+        /* Workflow */
+        .workflow {
+            position: relative;
+            z-index: 1;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-subtle);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 96px 48px;
+        }
+
+        .workflow-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+            margin-top: 56px;
+        }
+
+        .step {
+            position: relative;
+            padding: 24px;
+            border-left: 2px solid var(--accent-blue);
+            background: var(--bg-tertiary);
+            border-radius: 0 10px 10px 0;
+        }
+
+        .step-num {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-blue);
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+        }
+
+        .step-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .step-desc {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+
+        /* Final CTA */
+        .final-cta {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 96px 48px;
+            text-align: center;
+        }
+
+        .final-cta-card {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            border: 1px solid var(--border-medium);
+            border-radius: 16px;
+            padding: 56px 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .final-cta-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -10%;
+            width: 120%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.15), transparent 60%);
+            pointer-events: none;
+        }
+
+        .final-cta h2 {
+            font-size: clamp(26px, 4vw, 36px);
+            font-weight: 700;
+            margin-bottom: 14px;
+            position: relative;
+            letter-spacing: -0.02em;
+        }
+
+        .final-cta p {
+            color: var(--text-tertiary);
+            margin-bottom: 28px;
+            position: relative;
+        }
+
+        /* Footer */
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border-subtle);
+            padding: 32px 48px;
+            text-align: center;
+            color: var(--text-tertiary);
+            font-size: 13px;
+        }
+
+        footer a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        footer a:hover { color: var(--accent-blue); }
+
+        @media (max-width: 640px) {
+            .nav { padding: 18px 20px; }
+            .nav-links { display: none; }
+            .hero, .features, .workflow, .final-cta { padding-left: 20px; padding-right: 20px; }
+            .stats { gap: 32px; padding: 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="nav">
+        <div class="brand">
+            <div class="brand-mark">A</div>
+            <span>ARC3D<sup class="brand-tm">™</sup></span>
+        </div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#workflow">Workflow</a>
+            <a href="arc3d-help.html">Help</a>
+            <a href="index.html">Projects</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="badge">
+            <span class="badge-dot"></span>
+            Version 1.0 · Browser-Based CAD
+        </div>
+        <h1>
+            Design buildings in <span class="gradient">2D &amp; 3D</span><br>
+            right inside your browser.
+        </h1>
+        <p class="subtitle">
+            ARC3D™ is a professional architectural CAD platform from HSAN Studios. Draw walls,
+            place doors and windows, model roofs and staircases, and switch instantly between
+            precision 2D drafting and immersive 3D visualization — no installation required.
+        </p>
+        <div class="cta-row">
+            <a class="btn btn-primary" href="arc3d.html">
+                Launch ARC3D
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </a>
+            <a class="btn btn-secondary" href="arc3d-help.html">View Documentation</a>
+        </div>
+    </section>
+
+    <!-- STATS -->
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value">24</div>
+            <div class="stat-label">Manager Modules</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">2D / 3D</div>
+            <div class="stat-label">Dual View Modes</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">100%</div>
+            <div class="stat-label">Browser-Native</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">∞</div>
+            <div class="stat-label">Undo History</div>
+        </div>
+    </div>
+
+    <!-- FEATURES -->
+    <section class="features" id="features">
+        <div class="section-header">
+            <div class="section-eyebrow">Capabilities</div>
+            <h2 class="section-title">Everything you need to design</h2>
+            <p class="section-sub">A complete toolkit for residential and commercial architectural workflows.</p>
+        </div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 3v18"/></svg>
+                </div>
+                <div class="feature-title">Wall System</div>
+                <p class="feature-desc">Solid, cavity, and stud walls with automatic mitered corners, snapping, and centerline geometry.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M2 21h18"/><circle cx="13" cy="13" r="1" fill="currentColor"/></svg>
+                </div>
+                <div class="feature-title">Doors &amp; Windows</div>
+                <p class="feature-desc">Insert openings into walls with automatic wall cutting, hinge sides, and configurable dimensions.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12 12 4l9 8M5 11v9h14v-9"/></svg>
+                </div>
+                <div class="feature-title">Roof Modeling</div>
+                <p class="feature-desc">Hip, gable, and flat roof types with face splitting, tapering, and structural framing.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h4v-4h4v-4h4V9h4V5h4"/></svg>
+                </div>
+                <div class="feature-title">Staircases</div>
+                <p class="feature-desc">Straight, U-shaped, and spiral stairs with stringers, railings, landings, and material presets.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20M12 2v20"/><circle cx="12" cy="12" r="9"/></svg>
+                </div>
+                <div class="feature-title">Multi-Story Levels</div>
+                <p class="feature-desc">Ground, first, second floors and basement with custom elevations and per-level visibility.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+                </div>
+                <div class="feature-title">Project Persistence</div>
+                <p class="feature-desc">Auto-save every 5 minutes with IndexedDB storage, project folders, and JSON export.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                </div>
+                <div class="feature-title">Import &amp; Export</div>
+                <p class="feature-desc">DXF and IFC import, plus PDF and image export for sharing drawings with clients and contractors.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                </div>
+                <div class="feature-title">Real-Time Rendering</div>
+                <p class="feature-desc">Babylon.js 6.0 powered 3D viewport with shadows, materials, skybox, and orbit controls.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- WORKFLOW -->
+    <section class="workflow" id="workflow">
+        <div class="workflow-inner">
+            <div class="section-header">
+                <div class="section-eyebrow">Workflow</div>
+                <h2 class="section-title">From sketch to model in minutes</h2>
+                <p class="section-sub">A streamlined four-step process built for speed.</p>
+            </div>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">STEP 01</div>
+                    <div class="step-title">Draft in 2D</div>
+                    <div class="step-desc">Lay out walls, doors, and windows on the orthographic grid with snapping and dimensioning.</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">STEP 02</div>
+                    <div class="step-title">Add Levels</div>
+                    <div class="step-desc">Stack floors, place staircases, and configure elevations for multi-story buildings.</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">STEP 03</div>
+                    <div class="step-title">Visualize in 3D</div>
+                    <div class="step-desc">Press <strong>3</strong> to enter perspective view with shadows, materials, and orbit controls.</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">STEP 04</div>
+                    <div class="step-title">Export &amp; Share</div>
+                    <div class="step-desc">Save as a project, export to PDF, or hand off DXF files to engineering teams.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="final-cta">
+        <div class="final-cta-card">
+            <h2>Ready to start designing?</h2>
+            <p>Open ARC3D directly in your browser — no downloads, no signup.</p>
+            <a class="btn btn-primary" href="arc3d.html">
+                Launch ARC3D
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+    </section>
+
+    <footer>
+        <p>
+            © 2026 <a href="https://hsan-studios.com">HSAN Studios</a>. All Rights Reserved. ·
+            ARC3D™ is a trademark of HSAN Studios. ·
+            <a href="mailto:support@HSAN-Studios.com">support@HSAN-Studios.com</a>
+        </p>
+    </footer>
+
+</body>
+</html>

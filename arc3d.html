@@ -30069,7 +30069,7 @@ class SceneManager {
             // Enable edge rendering on the mesh itself if it has geometry
             if (node.enableEdgesRendering && node.getTotalVertices && node.getTotalVertices() > 0) {
                 node.enableEdgesRendering(0.95, false);
-                node.edgesWidth = 4.0;
+                node.edgesWidth = 0.8;
                 node.edgesColor = new BABYLON.Color4(0, 0, 0, 1); // Black edges
             }
             
@@ -30079,7 +30079,7 @@ class SceneManager {
                 children.forEach(child => {
                     if (child.enableEdgesRendering && child.getTotalVertices && child.getTotalVertices() > 0) {
                         child.enableEdgesRendering(0.95, false);
-                        child.edgesWidth = 3.0;
+                        child.edgesWidth = 0.6;
                         child.edgesColor = new BABYLON.Color4(0, 0, 0, 1); // Black edges
                     }
                 });
@@ -30393,7 +30393,7 @@ class SceneManager {
             
             // Enable edge rendering for better visibility
             outlineMesh.enableEdgesRendering();
-            outlineMesh.edgesWidth = 3.0;
+            outlineMesh.edgesWidth = 0.6;
             outlineMesh.edgesColor = new BABYLON.Color4(0.2, 0.6, 1.0, 1.0);
             
             return outlineMesh;
@@ -30455,7 +30455,7 @@ class SceneManager {
             outlineMesh.isPickable = false;
             outlineMesh.renderingGroupId = 2;
             outlineMesh.enableEdgesRendering();
-            outlineMesh.edgesWidth = 3.0;
+            outlineMesh.edgesWidth = 0.6;
             outlineMesh.edgesColor = new BABYLON.Color4(0.2, 0.6, 1.0, 1.0);
             return outlineMesh;
         } catch (error) {
@@ -30509,7 +30509,7 @@ class SceneManager {
             outlineMesh.isPickable = false;
             outlineMesh.renderingGroupId = 2;
             outlineMesh.enableEdgesRendering();
-            outlineMesh.edgesWidth = 3.0;
+            outlineMesh.edgesWidth = 0.6;
             outlineMesh.edgesColor = new BABYLON.Color4(0.2, 0.6, 1.0, 1.0);
 
             return outlineMesh;
@@ -30564,7 +30564,7 @@ class SceneManager {
             outlineMesh.isPickable = false;
             outlineMesh.renderingGroupId = 2;
             outlineMesh.enableEdgesRendering();
-            outlineMesh.edgesWidth = 3.0;
+            outlineMesh.edgesWidth = 0.6;
             outlineMesh.edgesColor = new BABYLON.Color4(0.2, 0.6, 1.0, 1.0);
             return outlineMesh;
         } catch (error) {
@@ -30722,7 +30722,7 @@ class SceneManager {
             
             // Enable edge rendering with thin lines
             outlineMesh.enableEdgesRendering();
-            outlineMesh.edgesWidth = 1.0;
+            outlineMesh.edgesWidth = 0.5;
             outlineMesh.edgesColor = new BABYLON.Color4(0.3, 0.6, 1.0, 1.0);
             
             return outlineMesh;
@@ -30786,7 +30786,7 @@ class SceneManager {
             outlineMesh.isPickable = false;
             outlineMesh.renderingGroupId = 2;
             outlineMesh.enableEdgesRendering();
-            outlineMesh.edgesWidth = 1.0;
+            outlineMesh.edgesWidth = 0.5;
             outlineMesh.edgesColor = new BABYLON.Color4(0.3, 0.6, 1.0, 1.0);
             
             return outlineMesh;
@@ -30889,7 +30889,7 @@ class SceneManager {
             
             // Enable edge rendering with thin lines
             outlineMesh.enableEdgesRendering();
-            outlineMesh.edgesWidth = 1.0;
+            outlineMesh.edgesWidth = 0.5;
             outlineMesh.edgesColor = new BABYLON.Color4(0.3, 0.6, 1.0, 1.0);
             
             return outlineMesh;
@@ -31204,7 +31204,7 @@ class SceneManager {
             
             // Enable edge rendering
             outlineMesh.enableEdgesRendering();
-            outlineMesh.edgesWidth = 1.5;
+            outlineMesh.edgesWidth = 0.7;
             outlineMesh.edgesColor = new BABYLON.Color4(0.9, 0.6, 0.2, 1.0);
             
             return outlineMesh;
@@ -70625,7 +70625,7 @@ class BuildingTools {
      * Uses thin black box bars so thickness is consistent and visible at any zoom.
      * Coordinates are local to the opening node (centered at 0,0,0).
      */
-    _addOpeningFrameOutline(parentNode, width, height, depth, idPrefix) {
+    _addOpeningFrameOutline(parentNode, width, height, depth, idPrefix, spec) {
         try {
             if (!parentNode || !sceneManager?.scene) return;
             const scene = sceneManager.scene;
@@ -70637,6 +70637,12 @@ class BuildingTools {
             // still occludes the bars when viewed from the opposite side.
             const eps = 0.0015;
             const t = 0.018;   // bar thickness ~18mm — visible thick outline
+            
+            // Get corner radii from spec
+            const cornerRadiusLeft = spec?.cornerRadiusLeft || 0;
+            const cornerRadiusRight = spec?.cornerRadiusRight || 0;
+            const hasArch = cornerRadiusLeft > 0.005 || cornerRadiusRight > 0.005;
+            
             // Shared black material — lit by depth test so walls occlude it.
             if (!this._openingOutlineMat || this._openingOutlineMat.isDisposed?.()) {
                 const mat = new BABYLON.StandardMaterial('openingOutlineMat', scene);
@@ -70653,6 +70659,7 @@ class BuildingTools {
                 this._openingOutlineMat = mat;
             }
             const mat = this._openingOutlineMat;
+            
             const faces = [hd + eps, -(hd + eps)];
             faces.forEach((zPos, i) => {
                 const makeBar = (name, w, h, x, y) => {
@@ -70663,18 +70670,104 @@ class BuildingTools {
                     bar.position.set(x, y, zPos);
                     bar.material = mat;
                     bar.isPickable = false;
-                    // Render in the default group so the wall depth buffer
-                    // properly occludes the outline. (Group 2 clears depth
-                    // and would draw the bar through the wall.)
                     bar.renderingGroupId = 0;
                     bar.alwaysSelectAsActiveMesh = false;
                     bar.metadata = { type: 'opening-outline' };
                     return bar;
                 };
-                makeBar(`${idPrefix}_face${i}_top`,    width + t,  t,         0,   hh);
-                makeBar(`${idPrefix}_face${i}_bottom`, width + t,  t,         0,  -hh);
-                makeBar(`${idPrefix}_face${i}_left`,   t,          height + t,-hw, 0);
-                makeBar(`${idPrefix}_face${i}_right`,  t,          height + t, hw, 0);
+                
+                // Make arc line segment using TubeGeometry
+                const makeArcBar = (name, radius, startAngle, endAngle, center) => {
+                    const segmentCount = Math.ceil(Math.abs(endAngle - startAngle) * 20); // More segments for smoother curve
+                    const points = [];
+                    for (let j = 0; j <= segmentCount; j++) {
+                        const angle = startAngle + (endAngle - startAngle) * (j / segmentCount);
+                        const x = center.x + radius * Math.cos(angle);
+                        const y = center.y + radius * Math.sin(angle);
+                        points.push(new BABYLON.Vector3(x, y, 0));
+                    }
+                    
+                    const tube = BABYLON.MeshBuilder.CreateTube(name, {
+                        path: points,
+                        radius: t / 2,
+                        updatable: false
+                    }, scene);
+                    tube.parent = parentNode;
+                    tube.position.z = zPos;
+                    tube.material = mat;
+                    tube.isPickable = false;
+                    tube.renderingGroupId = 0;
+                    tube.alwaysSelectAsActiveMesh = false;
+                    tube.metadata = { type: 'opening-outline' };
+                    return tube;
+                };
+                
+                if (hasArch) {
+                    // Create arched outline
+                    const topY = hh; // Top of opening
+                    const bottomY = -hh; // Bottom of opening
+                    const leftX = -hw; // Left edge
+                    const rightX = hw; // Right edge
+                    
+                    // Bottom bar (straight)
+                    makeBar(`${idPrefix}_face${i}_bottom`, width + t, t, 0, bottomY);
+                    
+                    // Left bar (straight vertical)
+                    makeBar(`${idPrefix}_face${i}_left`, t, height + t - cornerRadiusLeft - cornerRadiusRight, leftX, 0);
+                    
+                    // Right bar (straight vertical)
+                    makeBar(`${idPrefix}_face${i}_right`, t, height + t - cornerRadiusLeft - cornerRadiusRight, rightX, 0);
+                    
+                    // Top left arch
+                    if (cornerRadiusLeft > 0.005) {
+                        const cornerCenterLeft = new BABYLON.Vector3(leftX + cornerRadiusLeft, topY - cornerRadiusLeft, 0);
+                        makeArcBar(
+                            `${idPrefix}_face${i}_archLeft`,
+                            cornerRadiusLeft,
+                            Math.PI,           // Start at left (180°)
+                            Math.PI / 2,        // End at top (90°)
+                            cornerCenterLeft
+                        );
+                    } else {
+                        // No left radius, just straight top segment up to right arch start
+                        const straightTopLeft = leftX + t/2;
+                        makeBar(`${idPrefix}_face${i}_topLeft`, (rightX - straightTopLeft - cornerRadiusRight * 2) + t, t, (straightTopLeft + rightX) / 2 - cornerRadiusRight, topY);
+                    }
+                    
+                    // Top right arch
+                    if (cornerRadiusRight > 0.005) {
+                        const cornerCenterRight = new BABYLON.Vector3(rightX - cornerRadiusRight, topY - cornerRadiusRight, 0);
+                        makeArcBar(
+                            `${idPrefix}_face${i}_archRight`,
+                            cornerRadiusRight,
+                            Math.PI / 2,        // Start at top (90°)
+                            0,                  // End at right (0°)
+                            cornerCenterRight
+                        );
+                    } else {
+                        // No right radius, add straight segment if there's a left arch
+                        if (cornerRadiusLeft > 0.005) {
+                            const straightTopRight = rightX - t/2;
+                            makeBar(`${idPrefix}_face${i}_topRight`, (straightTopRight - (leftX + cornerRadiusLeft * 2)) + t, t, (leftX + cornerRadiusLeft * 2 + straightTopRight) / 2, topY);
+                        }
+                    }
+                    
+                    // Connect left arch to left bar
+                    if (cornerRadiusLeft > 0.005) {
+                        makeBar(`${idPrefix}_face${i}_leftTop`, t, cornerRadiusLeft, leftX, topY - cornerRadiusLeft);
+                    }
+                    
+                    // Connect right arch to right bar
+                    if (cornerRadiusRight > 0.005) {
+                        makeBar(`${idPrefix}_face${i}_rightTop`, t, cornerRadiusRight, rightX, topY - cornerRadiusRight);
+                    }
+                } else {
+                    // Square opening (original behavior)
+                    makeBar(`${idPrefix}_face${i}_top`, width + t, t, 0, hh);
+                    makeBar(`${idPrefix}_face${i}_bottom`, width + t, t, 0, -hh);
+                    makeBar(`${idPrefix}_face${i}_left`, t, height + t, -hw, 0);
+                    makeBar(`${idPrefix}_face${i}_right`, t, height + t, hw, 0);
+                }
             });
         } catch (e) {
             console.warn('Outline creation failed:', e);
@@ -71019,13 +71112,13 @@ class BuildingTools {
                 // Crisp black outlines, matches wall outline style
                 if (mesh.enableEdgesRendering && mesh.getTotalVertices && mesh.getTotalVertices() > 0) {
                     mesh.enableEdgesRendering(0.97, false);
-                    mesh.edgesWidth = 4.0;
+                    mesh.edgesWidth = 0.8;
                     mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
                 }
             });
             
             // Add explicit black perimeter outline on both wall faces of the door frame outer boundary
-            this._addOpeningFrameOutline(doorNode, spec.width + frameWidth * 2, spec.height + frameWidth, wallThickness, `door_outline_${spec.id}`);
+            this._addOpeningFrameOutline(doorNode, spec.width + frameWidth * 2, spec.height + frameWidth, wallThickness, `door_outline_${spec.id}`, spec);
             
             console.log('✅ Door geometry created successfully:', doorNode.name);
             return doorNode;
@@ -71254,13 +71347,13 @@ class BuildingTools {
                 // Crisp black outlines, matches wall outline style
                 if (mesh.enableEdgesRendering && mesh.getTotalVertices && mesh.getTotalVertices() > 0) {
                     mesh.enableEdgesRendering(0.97, false);
-                    mesh.edgesWidth = 4.0;
+                    mesh.edgesWidth = 0.8;
                     mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
                 }
             });
             
             // Add explicit black perimeter outline on both wall faces of the window frame outer boundary
-            this._addOpeningFrameOutline(windowNode, windowWidth + frameWidth * 2, windowHeight + frameWidth * 2, wallThickness, `window_outline_${spec.id}`);
+            this._addOpeningFrameOutline(windowNode, windowWidth + frameWidth * 2, windowHeight + frameWidth * 2, wallThickness, `window_outline_${spec.id}`, spec);
             
             console.log('✅ Window geometry created successfully:', windowNode.name);
             return windowNode;
@@ -71691,13 +71784,13 @@ class BuildingTools {
                 // Crisp black outlines, matches wall outline style
                 if (mesh.enableEdgesRendering && mesh.getTotalVertices && mesh.getTotalVertices() > 0) {
                     mesh.enableEdgesRendering(0.97, false);
-                    mesh.edgesWidth = 4.0;
+                    mesh.edgesWidth = 0.8;
                     mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
                 }
             });
             
             // Add explicit black perimeter outline on both wall faces of the opening frame outer boundary
-            this._addOpeningFrameOutline(frameNode, frameOpeningWidth + frameWidth * 2, frameOpeningHeight + frameWidth, wallThickness, `frame_outline_${spec.id}`);
+            this._addOpeningFrameOutline(frameNode, frameOpeningWidth + frameWidth * 2, frameOpeningHeight + frameWidth, wallThickness, `frame_outline_${spec.id}`, spec);
 
             console.log('✅ Frame geometry created successfully:', frameNode.name);
             return frameNode;
@@ -71896,13 +71989,13 @@ class BuildingTools {
                     // Crisp black outlines, matches wall outline style
                     if (m.enableEdgesRendering && m.getTotalVertices && m.getTotalVertices() > 0) {
                         m.enableEdgesRendering(0.97, false);
-                        m.edgesWidth = 4.0;
+                        m.edgesWidth = 0.8;
                         m.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
                     }
                 });
                 this.attachOpeningInteractivity(node);
                 // Black perimeter outline on both wall faces of door frame
-                this._addOpeningFrameOutline(node, spec.width, spec.height, wallDepth, `door_outline_${spec.id}`);
+                this._addOpeningFrameOutline(node, spec.width, spec.height, wallDepth, `door_outline_${spec.id}`, spec);
             } else if (spec.type === 'window') {
                 // Proper window frame using createOpeningFrame - use full wall depth
                 const tmp = BABYLON.MeshBuilder.CreateBox(`tmpWindowOpening_${spec.id}`, {
@@ -71990,18 +72083,18 @@ class BuildingTools {
                 windowFrameParts.forEach(m => {
                     if (m.enableEdgesRendering && m.getTotalVertices && m.getTotalVertices() > 0) {
                         m.enableEdgesRendering(0.97, false);
-                        m.edgesWidth = 4.0;
+                        m.edgesWidth = 0.8;
                         m.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
                     }
                 });
                 // Glass pane gets the same crisp black outline
                 if (glass.enableEdgesRendering && glass.getTotalVertices && glass.getTotalVertices() > 0) {
                     glass.enableEdgesRendering(0.97, false);
-                    glass.edgesWidth = 4.0;
+                    glass.edgesWidth = 0.8;
                     glass.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
                 }
                 // Black perimeter outline on both wall faces of window frame
-                this._addOpeningFrameOutline(node, spec.width, spec.height, wallDepth, `window_outline_${spec.id}`);
+                this._addOpeningFrameOutline(node, spec.width, spec.height, wallDepth, `window_outline_${spec.id}`, spec);
 
                 this.attachOpeningInteractivity(node);
             } else {
@@ -72408,7 +72501,7 @@ class BuildingTools {
             // Enable edge rendering for consistent 3D outlines
             if (newWall.enableEdgesRendering && newWall.getTotalVertices && newWall.getTotalVertices() > 0) {
                 newWall.enableEdgesRendering(0.95, false);
-                newWall.edgesWidth = 1.5;
+                newWall.edgesWidth = 0.7;
                 newWall.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
             }
             
@@ -73028,14 +73121,14 @@ class BuildingTools {
                 } else {
                     if (newWall.enableEdgesRendering && newWall.getTotalVertices && newWall.getTotalVertices() > 0) {
                         newWall.enableEdgesRendering(0.95, false);
-                        newWall.edgesWidth = 1.5;
+                        newWall.edgesWidth = 0.7;
                         newWall.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
                     }
                     if (newWall.getChildMeshes) {
                         newWall.getChildMeshes(false).forEach(child => {
                             if (child.enableEdgesRendering && child.getTotalVertices && child.getTotalVertices() > 0) {
                                 child.enableEdgesRendering(0.95, false);
-                                child.edgesWidth = 1.5;
+                                child.edgesWidth = 0.7;
                                 child.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
                             }
                         });
@@ -141545,7 +141638,7 @@ class AppManager {
                     // opening boundaries that show as extra vertical lines
                     if (!hasOpenings && mesh.enableEdgesRendering && mesh.getTotalVertices && mesh.getTotalVertices() > 0) {
                         mesh.enableEdgesRendering(0.95, false);
-                        mesh.edgesWidth = 4.0;
+                        mesh.edgesWidth = 0.8;
                         mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
                     } else if (hasOpenings && mesh.disableEdgesRendering) {
                         mesh.disableEdgesRendering();
@@ -141557,7 +141650,7 @@ class AppManager {
                         }
                         if (child.enableEdgesRendering && child.getTotalVertices && child.getTotalVertices() > 0) {
                             child.enableEdgesRendering(0.95, false);
-                            child.edgesWidth = 3.0;
+                            child.edgesWidth = 0.6;
                             child.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
                         }
                     });
@@ -141597,7 +141690,7 @@ class AppManager {
                         (insert.getChildMeshes?.() || []).forEach(child => {
                             if (child.enableEdgesRendering && child.getTotalVertices?.() > 0) {
                                 child.enableEdgesRendering(0.97, false);
-                                child.edgesWidth = 3.0;
+                                child.edgesWidth = 0.6;
                                 child.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
                             }
                         });
