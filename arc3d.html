@@ -28389,7 +28389,7 @@ class SceneManager {
             return;
         }
 
-        if (buildingTools.handleClick?.(pickedPoint)) {
+        if (buildingTools.handleClick?.(pickedPoint, mesh)) {
             return;
         }
         if (measurementTools.handleClick?.(pickedPoint)) return;
@@ -61796,7 +61796,7 @@ class BuildingTools {
         }
     }
 
-    handleClick(pickedPoint) {
+    handleClick(pickedPoint, pickedMesh = null) {
         // If a drawing tool is active (line, shape, text), return true to prevent selection logic
         if (this.lineToolMode || this.shapeToolMode || this.textToolActive) {
             return true;
@@ -61832,7 +61832,7 @@ class BuildingTools {
                 case 'beam':
                     return this.handleStructuralClick(point, this.activeTool);
                 case 'floor':
-                    return this.handleFloorClick(point);
+                    return this.handleFloorClick(point, pickedMesh);
                 case 'surface':
                     return this.handleSurfaceClick(point);
                 case 'plane':
@@ -75349,8 +75349,18 @@ class BuildingTools {
     /**
      * Handle floor boundary click - adds points in draw mode, selects points in select mode
      */
-    handleFloorClick(point) {
+    handleFloorClick(point, pickedMesh = null) {
         try {
+            // If the user clicked directly on a finalized floor mesh, load it for editing
+            // (works in both draw and select mode)
+            if (pickedMesh) {
+                const rootMesh = sceneManager?.findRootMesh?.(pickedMesh) || pickedMesh;
+                if (rootMesh?.metadata?.type === 'floor' && rootMesh.metadata?.boundaryPoints) {
+                    propertiesManager?.editFloorShape(rootMesh.id);
+                    return true;
+                }
+            }
+
             let clickPoint = point.clone();
             // Use current level elevation for multi-story floors
             const currentElevation = 0;
