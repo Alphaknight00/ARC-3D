@@ -71398,12 +71398,14 @@ class BuildingTools {
             const halfH = openingH / 2;
             const clampL = Math.min(rl, halfW, halfH);
             const clampR = Math.min(rr, halfW, halfH);
-            const arcSegs = 16;
+            const arcSegs = 20; // More segments for smooth arcs
 
-            // ── Inner contour (matches createOpeningCutMesh exactly), CCW in XZ ──
+            // ── Inner contour (opening boundary), CCW in XZ ──
             const inner = [];
             inner.push(new BABYLON.Vector3(-halfW, 0, -halfH));
             inner.push(new BABYLON.Vector3( halfW, 0, -halfH));
+            
+            // Right side with optional arch
             if (clampR > 0.005) {
                 inner.push(new BABYLON.Vector3(halfW, 0, halfH - clampR));
                 const cx = halfW - clampR, cz = halfH - clampR;
@@ -71414,6 +71416,8 @@ class BuildingTools {
             } else {
                 inner.push(new BABYLON.Vector3(halfW, 0, halfH));
             }
+            
+            // Left side with optional arch
             if (clampL > 0.005) {
                 inner.push(new BABYLON.Vector3(-halfW + clampL, 0, halfH));
                 const cx = -halfW + clampL, cz = halfH - clampL;
@@ -71425,39 +71429,61 @@ class BuildingTools {
                 inner.push(new BABYLON.Vector3(-halfW, 0, halfH));
             }
 
-            // ── Outer contour (CCW, offset frameWidth outward in the wall plane) ──
+            // ── Outer contour (frame outer edge), offset outward by frameWidth ──
             const outer = [];
             outer.push(new BABYLON.Vector3(-halfW - frameWidth, 0, -halfH - frameWidth));
             outer.push(new BABYLON.Vector3( halfW + frameWidth, 0, -halfH - frameWidth));
+            
+            // Right side outer edge with optional arch
             if (clampR > 0.005) {
-                const oR = clampR + frameWidth;
-                outer.push(new BABYLON.Vector3(halfW + frameWidth, 0, halfH - clampR));
+                // Outer arc with radius = clampR + frameWidth, same center as inner
+                const outerR = clampR + frameWidth;
                 const cx = halfW - clampR, cz = halfH - clampR;
+                
+                // Start at the point where outer right edge meets the arch
+                outer.push(new BABYLON.Vector3(halfW + frameWidth, 0, halfH - clampR));
+                
+                // Arc from 0° to 90° with outer radius
                 for (let i = 1; i <= arcSegs; i++) {
                     const a = (Math.PI / 2) * (i / arcSegs);
-                    outer.push(new BABYLON.Vector3(cx + oR * Math.cos(a), 0, cz + oR * Math.sin(a)));
+                    outer.push(new BABYLON.Vector3(
+                        cx + outerR * Math.cos(a),
+                        0,
+                        cz + outerR * Math.sin(a)
+                    ));
                 }
             } else {
+                // Square corner - offset top right
                 outer.push(new BABYLON.Vector3(halfW + frameWidth, 0, halfH + frameWidth));
             }
+            
+            // Top edge connecting right arch to left arch (or corners)
             if (clampL > 0.005) {
-                const oL = clampL + frameWidth;
-                outer.push(new BABYLON.Vector3(-halfW + clampL, 0, halfH + frameWidth));
+                const outerL = clampL + frameWidth;
                 const cx = -halfW + clampL, cz = halfH - clampL;
+                
+                // Connect from previous point to left arch start
+                outer.push(new BABYLON.Vector3(-halfW + clampL, 0, halfH + frameWidth));
+                
+                // Left arch from 90° to 180° with outer radius
                 for (let i = 1; i <= arcSegs; i++) {
                     const a = (Math.PI / 2) + (Math.PI / 2) * (i / arcSegs);
-                    outer.push(new BABYLON.Vector3(cx + oL * Math.cos(a), 0, cz + oL * Math.sin(a)));
+                    outer.push(new BABYLON.Vector3(
+                        cx + outerL * Math.cos(a),
+                        0,
+                        cz + outerL * Math.sin(a)
+                    ));
                 }
             } else {
+                // Square corner - offset top left
                 outer.push(new BABYLON.Vector3(-halfW - frameWidth, 0, halfH + frameWidth));
             }
 
-            // Hole must wind opposite to outer shape
+            // Hole must wind opposite to outer shape (clockwise)
             const hole = inner.slice().reverse();
 
-            // ExtrudePolygon: shape in XZ plane, extrudes along -Y. Same orientation
-            // trick as createOpeningCutMesh — rotate -90° around X to put height on
-            // Y and depth on Z, then centre depth on the wall plane.
+            // ExtrudePolygon: shape in XZ plane, extrudes along -Y
+            // Rotate to align height on Y axis, then adjust depth
             const mesh = BABYLON.MeshBuilder.ExtrudePolygon(`openingFrame_${id}`, {
                 shape: outer,
                 holes: [hole],
